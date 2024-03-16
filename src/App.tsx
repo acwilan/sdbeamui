@@ -152,7 +152,7 @@ const App: React.FC = () => {
                     <label htmlFor='loraScale' className='form-label'>Lora Scale</label>
                     <input type='text' className='form-control' name='loraScale' value={loraScale} onChange={handleLoraScaleChange} />
                   </div>
-                  <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || !modelIndex || loading}>Send</button>
+                  <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || loading}>Send</button>
                   <button type='button' className='btn btn-secondary' id='clearBtn' onClick={handleClear} disabled={loading}>Clear</button>
                 </form>
                 {loading && (
