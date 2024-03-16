@@ -2,10 +2,9 @@ import './App.css';
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 
-const models: { [key: string ]: string} = {
-  "cjs1m": "RealVisXL 4.0",
-  "q5i8v": "URPM"
-};
+const models: { [key: string ]: string} = process.env.REACT_APP_SD_MODEL_MAP
+  ? JSON.parse(`${process.env.REACT_APP_SD_MODEL_MAP}`)
+  : {};
 
 const App: React.FC = () => {
   const [promptValue, setPromptValue] = useState<string>(() => localStorage.getItem('prompt') || '');
