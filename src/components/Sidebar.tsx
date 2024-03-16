@@ -14,7 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ prompts, onPromptSelect, onDeleteProm
         {prompts.map(({ prompt, imageUrl }, index) => (
           <li key={index} className='list-group-item d-flex justify-content-between align-items-center'>
             <div onClick={() => onPromptSelect(prompt, imageUrl)} className='text-truncate' style={{ maxWidth: '80%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{prompt}</div>
-            <button type='button' className='btn btn-link' onClick={() => onDeletePrompt(index)}>
+            <button type='button' className='btn btn-link' onClick={() => onDeletePrompt(index)} name='delete'>
               <i className='bi bi-trash'></i>
             </button>
           </li>

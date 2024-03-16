@@ -2,18 +2,19 @@ import './App.css';
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 
-const models: string[] = [
-  "SDXL Turbo",
-  "Realistic Vision XL 4.0",
-  "SDXXXL v3.0"
-];
+const models: { [key: string ]: string} = {
+  "cjs1m": "RealVisXL 4.0",
+  "q5i8v": "URPM"
+};
 
 const App: React.FC = () => {
   const [promptValue, setPromptValue] = useState<string>(() => localStorage.getItem('prompt') || '');
   const [loading, setLoading] = useState<boolean>(false);
   const [outputImageUrl, setOutputImageUrl] = useState<string>(() => localStorage.getItem('outputImageUrl') || '');
   const [promptHistory, setPromptHistory] = useState<{ prompt: string; imageUrl: string }[]>(() => localStorage.getItem('promptHistory') ? JSON.parse(`${localStorage.getItem('promptHistory')}`) : []);
-  const [modelIndex, setModelIndex] = useState<number>(parseInt(localStorage.getItem('modelIndex') || '1'));
+  const [modelIndex, setModelIndex] = useState<string>(localStorage.getItem('modelIndex') || '');
+  const [loraName, setLoraName] = useState<string>(localStorage.getItem('loraName') || '');
+  const [loraScale, setLoraScale] = useState<string>(localStorage.getItem('loraScale') || '');
 
   useEffect(() => {
     localStorage.setItem('prompt', promptValue);
@@ -28,45 +29,44 @@ const App: React.FC = () => {
   }, [promptHistory]);
 
   useEffect(() => {
-    localStorage.setItem('modelIndex', modelIndex.toString());
+    localStorage.setItem('modelIndex', modelIndex);
   }, [modelIndex]);
 
-  const notificationsEnabled = (): boolean => {
-    return Notification.permission === 'granted';
-  }
+  useEffect(() => {
+    localStorage.setItem('loraName', loraName);
+  }, [loraName]);
 
-  const requestNotificationPermission = () => {
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        console.log('Notification permission granted.');
-      }
-    });
-  };
-
-  const showNotification = (title: string, body: string) => {
-    if (Notification.permission === 'granted') {
-      const notification = new Notification(title, { body });
-      notification.onclick = () => {
-        window.focus();
-      };
-    }
-  };
-
+  useEffect(() => {
+    localStorage.setItem('loraScale', loraScale);
+  }, [loraScale]);
+  
   const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPromptValue(event.target.value);
   };
 
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setModelIndex(parseInt(event.target.value));
+    setModelIndex(event.target.value);
+  };
+
+  const handleLoraNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLoraName(event.target.value);
+  };
+
+  const handleLoraScaleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLoraScale(event.target.value);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
 
-    const url = `${process.env.REACT_APP_BASE_URL}`;
+    const url = `https://${modelIndex}.apps.beam.cloud`;
     const authHeader = `Basic ${process.env.REACT_APP_AUTH_TOKEN}`;
-    const payload = { prompt: promptValue, model_index: modelIndex };
+    const payload = { 
+      prompt: promptValue, 
+      lora_model: loraName,
+      lora_scale: loraScale
+    };
     fetch(url, {
       method: 'POST',
       headers: {
@@ -101,7 +101,6 @@ const App: React.FC = () => {
           setOutputImageUrl(data.outputs['./output.png'].url);
           setPromptHistory([...promptHistory, { prompt: promptValue, imageUrl: data.outputs['./output.png'].url }]);
           setLoading(false);
-          showNotification('Task Complete', 'Task is complete. Click to view output image.');
         }
       })
       .catch(error => {
@@ -135,9 +134,6 @@ const App: React.FC = () => {
         <div className='col-9'>
           <h1>
             Simple Form
-            {notificationsEnabled() && (
-              <button className='btn btn-link' onClick={requestNotificationPermission}>Enable notifications</button>
-            )}
           </h1>
           <div className='container-lg'>
             <div className='row'>
@@ -148,12 +144,16 @@ const App: React.FC = () => {
                     <textarea className='form-control' id='prompt' name='prompt' value={promptValue} onChange={handleTextareaChange} />
                     <label htmlFor='model' className='form-label'>Model</label>
                     <select className='form-select' aria-label='Default select example' value={modelIndex} onChange={handleModelChange}>
-                        {models.map((model, index) => (
-                          <option key={index} value={index}>{model}</option>
+                        {Object.keys(models).map((key) => (
+                          <option key={key} value={key}>{models[key]}</option>
                         ))}
                     </select>
+                    <label htmlFor='loraName' className='form-label'>Lora Name</label>
+                    <input type='text' className='form-control' name='loraName' value={loraName} onChange={handleLoraNameChange} />
+                    <label htmlFor='loraScale' className='form-label'>Lora Scale</label>
+                    <input type='text' className='form-control' name='loraScale' value={loraScale} onChange={handleLoraScaleChange} />
                   </div>
-                  <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || loading}>Send</button>
+                  <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || !modelIndex || loading}>Send</button>
                   <button type='button' className='btn btn-secondary' id='clearBtn' onClick={handleClear} disabled={loading}>Clear</button>
                 </form>
                 {loading && (
