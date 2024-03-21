@@ -19,6 +19,6 @@ jobs:
         ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
     - name: connect and pull
       run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout ${{ secrets.MAIN_BRANCH }} && git pull && npx yarn && yarn install && rm -f .env && cp .env.template .env && sed -i 's/__REACT_APP_AUTH_TOKEN__/${{ secrets.REACT_APP_AUTH_TOKEN }}/g' .env && sed -i 's/__REACT_APP_SD_MODEL_MAP__/${{ secrets.REACT_APP_SD_MODEL_MAP }}/g' .env && PUBLIC_URL=/sdbeam yarn build && exit"
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.WORK_DIR }} && git checkout ${{ secrets.MAIN_BRANCH }} && git pull && npx yarn && yarn install && rm -f .env && cp .env.template .env && sed -i 's/__REACT_APP_AUTH_TOKEN__/${{ secrets.REACT_APP_AUTH_TOKEN }}/g' .env && echo 'REACT_APP_BASE_URL=${REACT_APP_SD_MODEL_MAP}' >> .env && PUBLIC_URL=/sdbeam yarn build && exit"
     - name: cleanup
       run: rm -rf ~/.ssh
