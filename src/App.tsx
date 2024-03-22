@@ -12,8 +12,7 @@ const App: React.FC = () => {
   const [outputImageUrl, setOutputImageUrl] = useState<string>(() => localStorage.getItem('outputImageUrl') || '');
   const [promptHistory, setPromptHistory] = useState<{ prompt: string; imageUrl: string }[]>(() => localStorage.getItem('promptHistory') ? JSON.parse(`${localStorage.getItem('promptHistory')}`) : []);
   const [modelIndex, setModelIndex] = useState<string>(localStorage.getItem('modelIndex') || '');
-  const [loraName, setLoraName] = useState<string>(localStorage.getItem('loraName') || '');
-  const [loraScale, setLoraScale] = useState<string>(localStorage.getItem('loraScale') || '');
+  const [negativePrompt, setNegativePrompt] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('prompt', promptValue);
@@ -30,14 +29,6 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('modelIndex', modelIndex);
   }, [modelIndex]);
-
-  useEffect(() => {
-    localStorage.setItem('loraName', loraName);
-  }, [loraName]);
-
-  useEffect(() => {
-    localStorage.setItem('loraScale', loraScale);
-  }, [loraScale]);
   
   const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPromptValue(event.target.value);
@@ -47,12 +38,8 @@ const App: React.FC = () => {
     setModelIndex(event.target.value);
   };
 
-  const handleLoraNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLoraName(event.target.value);
-  };
-
-  const handleLoraScaleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setLoraScale(event.target.value);
+  const handleNegativePromptChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNegativePrompt(event.target.value);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -63,8 +50,7 @@ const App: React.FC = () => {
     const authHeader = `Basic ${process.env.REACT_APP_AUTH_TOKEN}`;
     const payload = { 
       prompt: promptValue, 
-      lora_model: loraName,
-      lora_scale: loraScale
+      negative_prompt: negativePrompt,
     };
     fetch(url, {
       method: 'POST',
@@ -140,17 +126,15 @@ const App: React.FC = () => {
                 <form id='promptForm' onSubmit={handleSubmit}>
                   <div className='mb-3'>
                     <label htmlFor='prompt' className='form-label'>Prompt</label>
-                    <textarea className='form-control' id='prompt' name='prompt' value={promptValue} onChange={handleTextareaChange} />
+                    <textarea className='form-control' id='prompt' name='prompt' value={promptValue} rows={4} onChange={handleTextareaChange} />
                     <label htmlFor='model' className='form-label'>Model</label>
                     <select className='form-select' aria-label='Default select example' value={modelIndex} onChange={handleModelChange}>
                         {Object.keys(models).map((key) => (
                           <option key={key} value={key}>{models[key]}</option>
                         ))}
                     </select>
-                    <label htmlFor='loraName' className='form-label'>Lora Name</label>
-                    <input type='text' className='form-control' name='loraName' value={loraName} onChange={handleLoraNameChange} />
-                    <label htmlFor='loraScale' className='form-label'>Lora Scale</label>
-                    <input type='text' className='form-control' name='loraScale' value={loraScale} onChange={handleLoraScaleChange} />
+                    <label htmlFor='negativePrompt' className='form-label'>Negative Prompt</label>
+                    <textarea className='form-control' name='negativePrompt' value={negativePrompt} rows={4} onChange={handleNegativePromptChange} />
                   </div>
                   <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || loading}>Send</button>
                   <button type='button' className='btn btn-secondary' id='clearBtn' onClick={handleClear} disabled={loading}>Clear</button>
