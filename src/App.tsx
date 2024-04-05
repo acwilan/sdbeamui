@@ -54,11 +54,11 @@ const App: React.FC = () => {
     setNegativePrompt(event.target.value);
   };
 
-  const handleHeightChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleHeightChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setHeight(event.target.value);
   };
 
-  const handleWidthChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleWidthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setWidth(event.target.value);
   };
 
@@ -191,6 +191,18 @@ const App: React.FC = () => {
                     </select>
                     <label htmlFor='negativePrompt' className='form-label'>Negative Prompt</label>
                     <textarea className='form-control' name='negativePrompt' value={negativePrompt} rows={4} onChange={handleNegativePromptChange} />
+                    <div className='row'>
+                      <div className='col'>
+                        <label htmlFor='height' className='form-label'>Height
+                          <input type='number' className='form-control' id='height' name='height' value={height} onChange={handleHeightChange} />
+                        </label>
+                      </div>
+                      <div className='col'>
+                        <label htmlFor='width' className='form-label'>Width
+                            <input type='number' className='form-control' id='width' name='width' value={width} onChange={handleWidthChange} />
+                        </label>
+                      </div>
+                    </div>
                   </div>
                   <button type='submit' className='btn btn-primary' id='sendBtn' disabled={promptValue.trim() === '' || loading}>Send</button>
                   <button type='button' className='btn btn-secondary' id='clearBtn' onClick={handleClear} disabled={loading}>Clear</button>
