@@ -1,6 +1,8 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
+import { PromptType } from './types';
+import { error } from 'console';
 
 const models: { [key: string ]: string} = process.env.REACT_APP_SD_MODEL_MAP
   ? JSON.parse(`${process.env.REACT_APP_SD_MODEL_MAP}`)
@@ -10,9 +12,10 @@ const App: React.FC = () => {
   const [promptValue, setPromptValue] = useState<string>(() => localStorage.getItem('prompt') || '');
   const [loading, setLoading] = useState<boolean>(false);
   const [outputImageUrl, setOutputImageUrl] = useState<string>(() => localStorage.getItem('outputImageUrl') || '');
-  const [promptHistory, setPromptHistory] = useState<{ prompt: string; imageUrl: string }[]>(() => localStorage.getItem('promptHistory') ? JSON.parse(`${localStorage.getItem('promptHistory')}`) : []);
+  const [promptHistory, setPromptHistory] = useState<PromptType[]>(() => localStorage.getItem('promptHistory') ? JSON.parse(`${localStorage.getItem('promptHistory')}`) : []);
   const [modelIndex, setModelIndex] = useState<string>(localStorage.getItem('modelIndex') || '');
   const [negativePrompt, setNegativePrompt] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('prompt', promptValue);
@@ -29,6 +32,10 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('modelIndex', modelIndex);
   }, [modelIndex]);
+
+  useEffect(() => {
+    localStorage.setItem('negativePrompt', negativePrompt);
+  }, [negativePrompt]);
   
   const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPromptValue(event.target.value);
@@ -45,6 +52,7 @@ const App: React.FC = () => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
+    setErrorMessage('');
 
     const url = `https://${modelIndex}.apps.beam.cloud`;
     const authHeader = `Basic ${process.env.REACT_APP_AUTH_TOKEN}`;
@@ -60,50 +68,76 @@ const App: React.FC = () => {
       },
       body: JSON.stringify(payload)
     })
-    .then(response => response.json())
-    .then(data => {
-      pollTaskStatus(data.task_id);
+    .then(response => {
+      if (response.status !== 200) {
+        throw new Error(`Invalid response ${response.status}`);
+      }
+      return response.json();
     })
-    .catch(error => {
-      console.error('Error:', error);
+    .then(data => {
+      setPromptHistory([...promptHistory, { 
+        prompt: promptValue, 
+        negativePrompt: negativePrompt, 
+        modelId: modelIndex, 
+        taskId: data.task_id, 
+      }]);
+      return pollTaskStatus(data.task_id);
+    }).then(imageUrl => {
+        setOutputImageUrl(imageUrl);
+        setLoading(false);
+    }).catch(error => {
+      console.error('Error: ', error);
       setLoading(false);
+      setErrorMessage(`Error retrieving result: ${error}`);
     });
   };
 
-  const pollTaskStatus = (taskId: string) => {
-    const statusUrl = `https://api.beam.cloud/v1/task/${taskId}/status/`;
-    const pollInterval = 3000; // 3 seconds
-    const poll = setInterval(() => {
-      fetch(statusUrl, {
-        headers: {
-          'Authorization': `Basic ${process.env.REACT_APP_AUTH_TOKEN}`
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'COMPLETE') {
+  const pollTaskStatus = (taskId: string): Promise<string> => 
+    new Promise<string>((resolve, reject) => {
+      const statusUrl = `https://api.beam.cloud/v1/task/${taskId}/status/`;
+      const pollInterval = 3000; // 3 seconds
+      const poll = setInterval(() => {
+        fetch(statusUrl, {
+          headers: {
+            'Authorization': `Basic ${process.env.REACT_APP_AUTH_TOKEN}`
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'COMPLETE') {
+            clearInterval(poll);
+            return resolve(data.outputs['./output.png'].url);
+          }
+          if (data.status !== 'PENDING' && data.status !== 'RUNNING') {
+            reject(data.status);
+          }
+        })
+        .catch(error => {
           clearInterval(poll);
-          setOutputImageUrl(data.outputs['./output.png'].url);
-          setPromptHistory([...promptHistory, { prompt: promptValue, imageUrl: data.outputs['./output.png'].url }]);
-          setLoading(false);
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        clearInterval(poll);
-        setLoading(false);
-      });
-    }, pollInterval);
-  };
+          reject(error);
+        });
+      }, pollInterval);
+    });
 
   const handleClear = () => {
     setPromptValue('');
+    setNegativePrompt('');
     setOutputImageUrl('');
+    setErrorMessage('');
   };
 
-  const handlePromptSelect = (selectedPrompt: string, selectedImageUrl: string) => {
-    setPromptValue(selectedPrompt);
-    setOutputImageUrl(selectedImageUrl);
+  const handlePromptSelect = (prompt: PromptType) => {
+    setPromptValue(prompt.prompt);
+    setModelIndex(prompt.modelId);
+    setNegativePrompt(prompt.negativePrompt);
+    if (prompt.taskId) {
+      setLoading(true);
+      pollTaskStatus(prompt.taskId)
+        .then(outputImageUrl => setOutputImageUrl(outputImageUrl))
+        .then(() => setLoading(false));
+    } else if (prompt.imageUrl) {
+      setOutputImageUrl(outputImageUrl)
+    }
   };
 
   const handlePromptDelete = (promptIndex: number) => {
@@ -123,6 +157,9 @@ const App: React.FC = () => {
           <div className='container-lg'>
             <div className='row'>
               <div className='col'>
+                {errorMessage && (
+                  <div className='alert alert-danger' role='alert'>{errorMessage}</div>
+                )}
                 <form id='promptForm' onSubmit={handleSubmit}>
                   <div className='mb-3'>
                     <label htmlFor='prompt' className='form-label'>Prompt</label>

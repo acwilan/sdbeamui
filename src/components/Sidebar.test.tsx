@@ -1,11 +1,12 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import Sidebar from './Sidebar';
+import { PromptType } from '../types';
 
 describe('Sidebar component', () => {
-  const prompts = [
-    { prompt: 'Prompt 1', imageUrl: 'https://example.com/image1.jpg' },
-    { prompt: 'Prompt 2', imageUrl: 'https://example.com/image2.jpg' },
+  const prompts: PromptType[] = [
+    { prompt: 'Prompt 1', negativePrompt: '', modelId: 'abc', imageUrl: 'https://example.com/image1.jpg' },
+    { prompt: 'Prompt 2', negativePrompt: '', modelId: 'abc', imageUrl: 'https://example.com/image2.jpg' },
   ];
   const onPromptSelectMock = jest.fn();
   const onDeletePromptMock = jest.fn();
