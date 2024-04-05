@@ -78,13 +78,15 @@ const App: React.FC = () => {
     const authHeader = `Basic ${process.env.REACT_APP_AUTH_TOKEN}`;
     const payload: Payload = { 
       prompt: promptValue, 
-      negative_prompt: negativePrompt,
     };
     if (height && height.trim().length > 0) {
       payload.height = parseInt(height.trim(), 0);
     }
     if (width && width.trim().length > 0) {
       payload.width = parseInt(width.trim(), 0);
+    }
+    if (negativePrompt && negativePrompt.trim().length > 0) {
+      payload.negative_prompt = negativePrompt.trim();
     }
     fetch(url, {
       method: 'POST',
