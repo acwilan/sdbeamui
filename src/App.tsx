@@ -2,7 +2,6 @@ import './App.css';
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import { PromptType } from './types';
-import { error } from 'console';
 
 const models: { [key: string ]: string} = process.env.REACT_APP_SD_MODEL_MAP
   ? JSON.parse(`${process.env.REACT_APP_SD_MODEL_MAP}`)
@@ -16,6 +15,8 @@ const App: React.FC = () => {
   const [modelIndex, setModelIndex] = useState<string>(localStorage.getItem('modelIndex') || '');
   const [negativePrompt, setNegativePrompt] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [height, setHeight] = useState<string>('');
+  const [width, setWidth] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('prompt', promptValue);
@@ -34,8 +35,12 @@ const App: React.FC = () => {
   }, [modelIndex]);
 
   useEffect(() => {
-    localStorage.setItem('negativePrompt', negativePrompt);
-  }, [negativePrompt]);
+    localStorage.setItem('height', height);
+  }, [height]);
+
+  useEffect(() => {
+    localStorage.setItem('width', width);
+  }, [width]);
   
   const handleTextareaChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPromptValue(event.target.value);
@@ -49,6 +54,14 @@ const App: React.FC = () => {
     setNegativePrompt(event.target.value);
   };
 
+  const handleHeightChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setHeight(event.target.value);
+  };
+
+  const handleWidthChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setWidth(event.target.value);
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
@@ -59,6 +72,8 @@ const App: React.FC = () => {
     const payload = { 
       prompt: promptValue, 
       negative_prompt: negativePrompt,
+      height: height,
+      width: width,
     };
     fetch(url, {
       method: 'POST',
@@ -80,6 +95,8 @@ const App: React.FC = () => {
         negativePrompt: negativePrompt, 
         modelId: modelIndex, 
         taskId: data.task_id, 
+        height: height,
+        width: width,
       }]);
       return pollTaskStatus(data.task_id);
     }).then(imageUrl => {
@@ -124,6 +141,8 @@ const App: React.FC = () => {
     setNegativePrompt('');
     setOutputImageUrl('');
     setErrorMessage('');
+    setHeight('');
+    setWidth('');
   };
 
   const handlePromptSelect = (prompt: PromptType) => {

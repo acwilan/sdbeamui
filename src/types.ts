@@ -5,4 +5,6 @@ export interface PromptType {
     taskId?: string | undefined;
     // @deprecated
     imageUrl?: string | undefined;
+    height?: string | undefined;
+    width?: string | undefined;
 }
