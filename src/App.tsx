@@ -7,6 +7,13 @@ const models: { [key: string ]: string} = process.env.REACT_APP_SD_MODEL_MAP
   ? JSON.parse(`${process.env.REACT_APP_SD_MODEL_MAP}`)
   : {};
 
+interface Payload {
+  prompt: string;
+  negative_prompt?: string | undefined;
+  height?: number | undefined;
+  width?: number | undefined;
+}
+
 const App: React.FC = () => {
   const [promptValue, setPromptValue] = useState<string>(() => localStorage.getItem('prompt') || '');
   const [loading, setLoading] = useState<boolean>(false);
@@ -69,12 +76,16 @@ const App: React.FC = () => {
 
     const url = `https://${modelIndex}.apps.beam.cloud`;
     const authHeader = `Basic ${process.env.REACT_APP_AUTH_TOKEN}`;
-    const payload = { 
+    const payload: Payload = { 
       prompt: promptValue, 
       negative_prompt: negativePrompt,
-      height: height,
-      width: width,
     };
+    if (height && height.trim().length > 0) {
+      payload.height = parseInt(height.trim(), 0);
+    }
+    if (width && width.trim().length > 0) {
+      payload.width = parseInt(width.trim(), 0);
+    }
     fetch(url, {
       method: 'POST',
       headers: {
