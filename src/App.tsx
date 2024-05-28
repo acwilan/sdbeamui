@@ -20,10 +20,10 @@ const App: React.FC = () => {
   const [outputImageUrl, setOutputImageUrl] = useState<string>(() => localStorage.getItem('outputImageUrl') || '');
   const [promptHistory, setPromptHistory] = useState<PromptType[]>(() => localStorage.getItem('promptHistory') ? JSON.parse(`${localStorage.getItem('promptHistory')}`) : []);
   const [modelIndex, setModelIndex] = useState<string>(localStorage.getItem('modelIndex') || '');
-  const [negativePrompt, setNegativePrompt] = useState<string>('');
+  const [negativePrompt, setNegativePrompt] = useState<string>(localStorage.getItem('negativePrompt') || '');
   const [errorMessage, setErrorMessage] = useState<string>('');
-  const [height, setHeight] = useState<string>('');
-  const [width, setWidth] = useState<string>('');
+  const [height, setHeight] = useState<string>(localStorage.getItem('height') || '');
+  const [width, setWidth] = useState<string>(localStorage.getItem('width') || '');
 
   useEffect(() => {
     localStorage.setItem('prompt', promptValue);
