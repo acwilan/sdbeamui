@@ -6,6 +6,8 @@ import { PromptType } from './types';
 const models: { [key: string ]: string} = process.env.REACT_APP_SD_MODEL_MAP
   ? JSON.parse(`${process.env.REACT_APP_SD_MODEL_MAP}`)
   : {};
+const sortedModels: [string, string][] = Object.entries(models)
+  .sort(([, valueA], [, valueB]) => valueA.localeCompare(valueB));
 
 interface Payload {
   prompt: string;
@@ -198,8 +200,8 @@ const App: React.FC = () => {
                     <textarea className='form-control' id='prompt' name='prompt' value={promptValue} rows={4} onChange={handleTextareaChange} />
                     <label htmlFor='model' className='form-label'>Model</label>
                     <select className='form-select' aria-label='Default select example' value={modelIndex} onChange={handleModelChange}>
-                        {Object.keys(models).map((key) => (
-                          <option key={key} value={key}>{models[key]}</option>
+                        {sortedModels.map(([key, value]) => (
+                          <option key={key} value={key}>{value}</option>
                         ))}
                     </select>
                     <label htmlFor='negativePrompt' className='form-label'>Negative Prompt</label>
